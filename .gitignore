@@ -1,2 +1,6 @@
 .ipynb_checkpoints/
 venv/
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+*.so
