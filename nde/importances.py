@@ -6,6 +6,28 @@ from numpy.typing import NDArray
 from datascope.utility import Provenance
 
 
+class PipelineImportance:
+    def __init__(self, pipeline_utility, importance, **kwargs):
+        self.pipeline_utility_ = pipeline_utility
+        self.importance = importance
+        self.kwargs = kwargs
+
+    def fit(self, train, train_labels):    
+        self.train_ = train
+        self.train_labels_ = train_labels
+        return self
+
+    def score(self, valid, valid_labels):
+        X_train = self.pipeline_utility_.encoding_.fit_transform(self.train_)
+        y_train = self.pipeline_utility_.label_encoder_.fit_transform(self.train_labels_)
+        X_valid = self.pipeline_utility_.encoding_.transform(valid)
+        y_valid = self.pipeline_utility_.label_encoder_.transform(valid_labels)       
+
+        importance = self.importance(utility=self.pipeline_utility_.utility_, **self.kwargs)
+        
+        return importance.fit(X_train, y_train).score(X_valid, y_valid)
+    
+
 class LooImportance(Importance):
     
     def __init__(self, utility):
