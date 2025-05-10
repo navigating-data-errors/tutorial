@@ -12,9 +12,10 @@ class PipelineImportance:
         self.importance = importance
         self.kwargs = kwargs
 
-    def fit(self, train, train_labels):    
+    def fit(self, train, train_labels, provenance=None):    
         self.train_ = train
         self.train_labels_ = train_labels
+        self.provenance_ = provenance
         return self
 
     def score(self, valid, valid_labels):
@@ -25,7 +26,7 @@ class PipelineImportance:
 
         importance = self.importance(utility=self.pipeline_utility_.utility_, **self.kwargs)
         
-        return importance.fit(X_train, y_train).score(X_valid, y_valid)
+        return importance.fit(X_train, y_train, provenance=self.provenance_).score(X_valid, y_valid)
     
 
 class LooImportance(Importance):
@@ -55,8 +56,7 @@ class LooImportance(Importance):
     ) -> Iterable[float]:
         
         complete_utility = self.utility(self.X_train_, self.y_train_, X_valid, y_valid).score
-        
-        #TODO this should use the provenance instead to correctly remove samples                    
+                  
         loos = []
         assignment = np.ones(self.provenance.num_units)
         
