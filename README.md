@@ -1,9 +1,10 @@
+The goal of this tutorial is to **showcase different notions of data importance**, based on the [DataScope](https://github.com/easeml/datascope) library. The notebooks revolve around a **toy problem of classifying the sentiment of recommendation letters**.
+
 ## Part 1: Data Errors
 
-The goal of this tutorial is to **showcase different notions of data importance**, based on the [DataScope](https://github.com/easeml/datascope) library. The notebook revolves around a **toy problem of classifying the sentiment of recommendation letters**. We furthermore detail how to leverage data importance to **identify impactful label errors** in the data.
+We begin by detailling how to leverage data importance to **identify impactful label errors** in the data.
 
  * https://colab.research.google.com/drive/1oYuWJr9J36hT83k3gjqqOLUwsze8rZVN?usp=sharing
-
 
 ## Part 2a: Tracing Data Errors through Pipelines
 
