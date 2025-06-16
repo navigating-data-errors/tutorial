@@ -6,14 +6,7 @@ authors = [
     { name="Your Name", email="your.email@example.com" }
 ]
 requires-python = ">=3.9"
-dependencies = [
-    "datascope==0.0.32",
-    "sentence-transformers==3.4.1",
-    "pandas==2.2.3",
-    "scikit-learn==1.6.1",
-    "scipy==1.13.1",
-    "seaborn==0.13.2"
-]
+dependencies = []
 
 [build-system]
 requires = ["setuptools>=61.0"]
