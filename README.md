@@ -12,11 +12,11 @@ We provide several notebooks walking you through several data debugging scenario
 
 We begin by detailling how to leverage data importance to **identify impactful label errors** in the data.
 
- * https://colab.research.google.com/github/navigating-data-errors/tutorial/blob/main/navigating_data_errors_tutorial_part1_data_errors.ipynb
+* https://colab.research.google.com/github/navigating-data-errors/tutorial/blob/main/navigating_data_errors_tutorial_part1_data_errors.ipynb
 
 ### Part 2a: Tracing Data Errors through Pipelines
 
-We extend the previous notebook with a complex feature encoding pipeline, and show that we can **trace data errors through these pipelines** easily too. 
+We extend the previous notebook with a complex feature encoding pipeline, and show that we can **trace data errors through these pipelines** easily too.
 
 * https://colab.research.google.com/github/navigating-data-errors/tutorial/blob/main/navigating_data_errors_tutorial_part2a_with_pipeline.ipynb
 
@@ -25,7 +25,6 @@ We extend the previous notebook with a complex feature encoding pipeline, and sh
 We extend our example use case with dataframe operations, and show that we can **trace data errors through these relational operations** as well.
 
 * https://colab.research.google.com/github/navigating-data-errors/tutorial/blob/main/navigating_data_errors_tutorial_part2b_with_dataframes.ipynb
-
 
 ## Frequently Asked Questions
 
