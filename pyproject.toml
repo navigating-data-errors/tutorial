@@ -14,6 +14,7 @@ dependencies = [
     "scipy==1.13.1",
     "seaborn==0.13.2",
     "ipykernel==6.29.5",
+    "black==25.1.0",
 ]
 
 [build-system]
