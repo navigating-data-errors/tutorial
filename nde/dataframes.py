@@ -6,13 +6,12 @@ import zlib
 def hash_str(value):
     return hex(zlib.crc32(str.encode(value)))
 
-def read_csv(path, source_name, header=None, names=None, sep=',', parse_dates=False):
+
+def read_csv(path, source_name, header=None, names=None, sep=",", parse_dates=False):
     df = pd.read_csv(path, header=header, names=names, sep=sep, parse_dates=parse_dates)
-    #source_name = hash_str(path)
-    column_provenance = {
-        column: [f"{source_name}.{column}"] for column in df.columns
-    }
-    row_provenance_column = f'__lester_provenance_{source_name}'
+    # source_name = hash_str(path)
+    column_provenance = {column: [f"{source_name}.{column}"] for column in df.columns}
+    row_provenance_column = f"__lester_provenance_{source_name}"
     df[row_provenance_column] = range(len(df))
     row_provenance_columns = [row_provenance_column]
 
@@ -35,13 +34,23 @@ def union(tracked_dataframes):
 
 def split(tracked_dataframe, fraction):
     from sklearn.model_selection import train_test_split
-    first_df, second_df = train_test_split(tracked_dataframe.df, train_size=fraction,
-                                           test_size=(1.0 - fraction), shuffle=True)
 
-    first = TrackedDataframe(tracked_dataframe.source_name, first_df, tracked_dataframe.row_provenance_columns,
-                             tracked_dataframe.column_provenance)
-    second = TrackedDataframe(tracked_dataframe.source_name, second_df, tracked_dataframe.row_provenance_columns,
-                              tracked_dataframe.column_provenance)
+    first_df, second_df = train_test_split(
+        tracked_dataframe.df, train_size=fraction, test_size=(1.0 - fraction), shuffle=True
+    )
+
+    first = TrackedDataframe(
+        tracked_dataframe.source_name,
+        first_df,
+        tracked_dataframe.row_provenance_columns,
+        tracked_dataframe.column_provenance,
+    )
+    second = TrackedDataframe(
+        tracked_dataframe.source_name,
+        second_df,
+        tracked_dataframe.row_provenance_columns,
+        tracked_dataframe.column_provenance,
+    )
     return first, second
 
 
@@ -76,14 +85,14 @@ class TrackedDataframe:
 
         result_row_provenance_columns = self.row_provenance_columns
         result_column_provenance = self.column_provenance
-        result_df = self.df.query(predicate_expression,
-                                  local_dict=local_variables, global_dict=global_variables)
+        result_df = self.df.query(predicate_expression, local_dict=local_variables, global_dict=global_variables)
         return TrackedDataframe(self.source_name, result_df, result_row_provenance_columns, result_column_provenance)
 
     def __getitem__(self, columns):
         result_row_provenance_columns = self.row_provenance_columns
-        result_column_provenance = {column: provenance for column, provenance in self.column_provenance.items()
-                                    if column in columns}
+        result_column_provenance = {
+            column: provenance for column, provenance in self.column_provenance.items() if column in columns
+        }
         target_columns = columns + self.row_provenance_columns
         result_df = self.df[target_columns]
         return TrackedDataframe(self.source_name, result_df, result_row_provenance_columns, result_column_provenance)
@@ -129,24 +138,25 @@ class TrackedDataframe:
         result_df = result_df.explode(target_column).reset_index(drop=True)
 
         return TrackedDataframe(self.source_name, result_df, result_row_provenance_columns, result_column_provenance)
-    
 
     def view_df(self):
-        columns_to_view = [column for column in self.df.columns 
-                           if column not in self.row_provenance_columns]
+        columns_to_view = [column for column in self.df.columns if column not in self.row_provenance_columns]
         return self.df[columns_to_view]
 
     def view_provenance_df(self):
 
-        polynomials = list(zip(*[
-            self.df[column].apply(lambda x: f"{column.replace('__lester_provenance_', '')}_{x}").tolist()
-            for column in self.row_provenance_columns
-        ]))
+        polynomials = list(
+            zip(
+                *[
+                    self.df[column].apply(lambda x: f"{column.replace('__lester_provenance_', '')}_{x}").tolist()
+                    for column in self.row_provenance_columns
+                ]
+            )
+        )
 
-        formatted_polynomials = [' * '.join(polynomial) for polynomial in polynomials]
+        formatted_polynomials = [" * ".join(polynomial) for polynomial in polynomials]
 
         return pd.DataFrame(formatted_polynomials, columns=["provenance_polynomial"])
-
 
     def create_provenance_info_for(self, source_name):
 
@@ -170,7 +180,7 @@ def deduplicate_list(seq):
 
 
 class ProvenanceInfo:
-    
+
     def __init__(self, source_provenance):
         identifier_to_indexes = {}
         for index, identifiers in enumerate(source_provenance):
@@ -184,7 +194,8 @@ class ProvenanceInfo:
         self.unique_identifiers = deduplicate_list(self.identifiers)
 
         from datascope.utility.provenance import Provenance, Units, Equality
-        self.units = Units(units=self.unique_identifiers, candidates=[0,1])
+
+        self.units = Units(units=self.unique_identifiers, candidates=[0, 1])
         self.expressions = [Equality(self.units[identifier], 1) for identifier in self.identifiers]
         self.datascope_provenance = Provenance(expressions=self.expressions)
 
@@ -193,14 +204,15 @@ class ProvenanceInfo:
 
     def random_identifiers(self, fraction):
         import numpy as np
+
         count = int(len(self.unique_identifiers) * fraction)
         return np.random.choice(self.unique_identifiers, count, replace=True)
 
     def first_row_index_for(self, identifier):
         return self.identifier_to_indexes[identifier][0]
-    
+
     def all_row_indexes_for(self, identifier):
-        return self.identifier_to_indexes[identifier]    
+        return self.identifier_to_indexes[identifier]
 
     def all_row_indexes_for_position(self, pos):
         identifier = self.units._units[pos]
@@ -208,4 +220,3 @@ class ProvenanceInfo:
 
     def as_datascope(self):
         return self.datascope_provenance
- 
