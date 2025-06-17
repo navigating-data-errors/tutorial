@@ -6,9 +6,9 @@ import zlib
 def hash_str(value):
     return hex(zlib.crc32(str.encode(value)))
 
-def read_csv(path, header=None, names=None, sep=',', parse_dates=False):
+def read_csv(path, source_name, header=None, names=None, sep=',', parse_dates=False):
     df = pd.read_csv(path, header=header, names=names, sep=sep, parse_dates=parse_dates)
-    source_name = hash_str(path)
+    #source_name = hash_str(path)
     column_provenance = {
         column: [f"{source_name}.{column}"] for column in df.columns
     }
@@ -136,12 +136,76 @@ class TrackedDataframe:
                            if column not in self.row_provenance_columns]
         return self.df[columns_to_view]
 
-    def view_provenance(self, source):
+    def view_provenance_df(self):
 
-        source_hash = hash_str(source)
-        provenance_columns = [column for column in self.row_provenance_columns if source_hash in column]
+        polynomials = list(zip(*[
+            self.df[column].apply(lambda x: f"{column.replace('__lester_provenance_', '')}_{x}").tolist()
+            for column in self.row_provenance_columns
+        ]))
+
+        formatted_polynomials = [' * '.join(polynomial) for polynomial in polynomials]
+
+        return pd.DataFrame(formatted_polynomials, columns=["provenance_polynomial"])
+
+
+    def create_provenance_info_for(self, source_name):
+
+        provenance_columns = [column for column in self.row_provenance_columns if source_name in column]
 
         if len(provenance_columns) == 0:
-            raise ValueError(f"Unknown source {source}!")
+            raise ValueError(f"Unknown source {source_name}!")
 
-        return self.df[provenance_columns].values.tolist()
+        source_provenance = self.df[provenance_columns].values.tolist()
+        return ProvenanceInfo(source_provenance)
+
+
+def deduplicate_list(seq):
+    seen = set()
+    result = []
+    for item in seq:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+
+class ProvenanceInfo:
+    
+    def __init__(self, source_provenance):
+        identifier_to_indexes = {}
+        for index, identifiers in enumerate(source_provenance):
+            identifier = identifiers[0]
+            if identifier not in identifier_to_indexes:
+                identifier_to_indexes[identifier] = []
+            identifier_to_indexes[identifier].append(index)
+
+        self.identifier_to_indexes = identifier_to_indexes
+        self.identifiers = [tuple_identifiers[0] for tuple_identifiers in source_provenance]
+        self.unique_identifiers = deduplicate_list(self.identifiers)
+
+        from datascope.utility.provenance import Provenance, Units, Equality
+        self.units = Units(units=self.unique_identifiers, candidates=[0,1])
+        self.expressions = [Equality(self.units[identifier], 1) for identifier in self.identifiers]
+        self.datascope_provenance = Provenance(expressions=self.expressions)
+
+    def num_identifiers(self):
+        return len(self.unique_identifiers)
+
+    def random_identifiers(self, fraction):
+        import numpy as np
+        count = int(len(self.unique_identifiers) * fraction)
+        return np.random.choice(self.unique_identifiers, count, replace=True)
+
+    def first_row_index_for(self, identifier):
+        return self.identifier_to_indexes[identifier][0]
+    
+    def all_row_indexes_for(self, identifier):
+        return self.identifier_to_indexes[identifier]    
+
+    def all_row_indexes_for_position(self, pos):
+        identifier = self.units._units[pos]
+        return self.identifier_to_indexes[identifier]
+
+    def as_datascope(self):
+        return self.datascope_provenance
+ 
